@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+      body {
+        font-size: 18px;
+      } 
+      h1 {
+        margin: 20px auto;
+        width: 80%;
+        text-align: center;
+      }
+      .wrapper {
+        margin: 0 auto;
+        width: 80%;
+        display: flex;
+        justify-content: stretch;
+      }
+      #button {
+        cursor: pointer;
+        padding: 5px 10px;
+        text-transform: upperCase;
+        font-size: 16px;
+        color: white;
+        background-color: gray;
+        border:none;
+        width: 100px;
+        margin: 5px auto;
+      }
+      #button:hover {
+        background-color: black;
+      }
+      #frame {
+        text-align: center;
+        margin: 0 auto;
+      }
+      #output p {
+        text-align: center;
+      }
+      #cat {
+        display: inline;
+      }
+    </style>
+    <title>Document</title>
+</head>
+<body>
+
+  <h1>Узнать прогноз погоды по местоположению</h1>
+
+  <div class="wrapper"> 
+
+    <div id="frame">
+      <input id="input" type="text" placeholder="Введите город" style="display:none">
+      <button id="button">Узнать</button>
+      <div id="output"></div>
+    </div>
+
+    <div id="cat"><img src="https://placekitten.com/200/300"></div>
+
+  </div>
+
+  <div class="finallyMessage"></div>
+
+  <script>
+    //Пример API для запроса: https://api.openweathermap.org/data/2.5/weather?
+    //1-ый вариант (по городу)q={city name}&appid={API key}&units=metric
+    //о-ой вар (по геопозиции)lat={lat}&lon={lon}&appid={API key}&units=metric
+
+    //Иконка: "http://openweathermap.org/img/wn/${icon}.png
+
+    const apiURL = 'https://api.openweathermap.org/data/2.5/weather';
+    const apiKey = '652c09ad08a6d553dfbcd2539c520c60';
+
+    function pageLoaded() {
+      let button = document.getElementById('button');
+      let output = document.getElementById('output');
+
+      button.addEventListener("click", getLocation);
+
+      function getLocation() {
+        if (!navigator.geolocation) {
+          writeOutput('В вашем браузере недоступна возможность определения местоположения');
+        } else {
+          navigator.geolocation.getCurrentPosition(success, error);
+        }
+      }
+
+      function success(data) {
+        let coords  = [data.coords.longitude, data.coords.latitude];
+        let url = formatURL(coords);
+        fetch(url)
+          .then(response => {
+            return response.json();
+          })
+          .then(data => {
+            writeOutput(formatOutput(data));
+          })
+          .catch((error) => {
+            writeOutput(`Ошибка! ${error} Неверный URL ${apiURL}`);
+          })
+          .finally(() => {
+            writeOutputFinally('Работа программы завершена');
+          });
+      }
+
+      function error() {
+        writeOutput('При определении местоположения произошла ошибка');
+      }
+
+      function formatURL(coords) {
+        let url = new URL(apiURL);
+        url.searchParams.set("lat", coords[1]);
+        url.searchParams.set("lon", coords[0]);
+        url.searchParams.set("appid", apiKey);
+        url.searchParams.set("units", 'metric');
+        url.searchParams.set("lang", 'ru');
+        return url;
+      }
+
+      function formatOutput(data) {
+         console.log(data);
+         let htmlString = `
+           <p><img src="http://openweathermap.org/img/wn/${data.weather[0].icon}.png" alt="${data.weather[0].description}"></p>
+           <p>Город: ${data.name}</p>
+           <p>${data.weather[0].description}</p>
+           <p>Температура: ${Math.round(data.main.temp)} &deg;C</p>
+           <p>Скорость ветра: ${Math.round(data.wind.speed)} м/с</p>
+           
+         `;
+         return htmlString;
+      }
+
+      function writeOutput(message) {
+        output.innerHTML = message;
+      }
+
+      function writeOutputFinally(message) {
+         const outputFinally = document.querySelector('.finallyMessage');
+         outputFinally.textContent = message;
+         outputFinally.style.cssText = 'text-align: center; margin: 20px auto; width: 80%; font-weight: bold';
+}
+    }
+
+
+
+// 1ый вариант: получение прогноза погода по введенному в инпут городу
+    // function pageLoaded() {
+      // let input = document.getElementById('input');
+      // let button = document.getElementById('button');
+      // let output = document.getElementById('output');
+
+    // 
+      // button.addEventListener("click", sendRequest);
+    // 
+      // function sendRequest() {
+          // if (!validateInput()) {return;}
+
+          // let requestURL = formatURL();  
+          // fetch(requestURL)
+              // .then(response => {
+                  // return response.json();
+              // })
+              // .then(data => {
+                  // writeOutput(formatOutput(data));
+              // })
+              // .catch((error) => {
+                  // writeOutput(`Ошибка! ${error} Неверный URL ${requestURL} `);
+              // })
+              // .finally(() => {
+                //  writeOutputFinally('Работа программы завершена');
+                //  setTimeout(() => {input.value = ''}, 5000); 
+              // });
+      // }
+
+      // function formatOutput(data) {
+          // let htmlString = `
+              // <p><img src="http://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png"></p>
+              // <p>Погода: ${data.weather[0].description}</p>
+              // <p>Температура: ${Math.round(data.main.temp)} C</p>
+              // <p>Скорость ветра: ${Math.round(data.wind.speed)} м/с</p>
+              // 
+          // `;
+          // return htmlString;
+      // }
+
+      // function writeOutput(message) {
+          // output.innerHTML = message;
+      // }
+
+      // function writeOutputFinally(message) {
+          // const outputFinally = document.querySelector('.finallyMessage');
+          // outputFinally.textContent = message;
+          // outputFinally.style.cssText = 'text-align: center; margin-top: 20px; font-weight: bold';
+      // }
+
+      // function formatURL() {
+          // let url = new URL(apiURL);
+          // url.searchParams.set("q", input.value);
+          // url.searchParams.set("appid", apiKey);
+          // url.searchParams.set("units", 'metric');
+          // url.searchParams.set("lang", 'ru');
+          // return url;
+      // }
+
+      // function validateInput(){
+          // return input.value !== "";
+      // }
+    // }
+
+    document.addEventListener ("DOMContentLoaded", pageLoaded);
+
+  </script>
+</body>
+</html>
